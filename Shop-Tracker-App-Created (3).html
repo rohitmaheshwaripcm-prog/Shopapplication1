@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Kirana POS</title>
+<style>
+:root{
+  --upi:#059669; --cash:#2563eb; --amber:#f59e0b;
+  --bg:#f8fafc; --card:#fff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);touch-action:manipulation}
+header{position:fixed;top:0;left:0;right:0;height:56px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;z-index:100;gap:8px}
+header .shop{font-weight:800;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+header .shop[contenteditable]:focus{outline:2px solid var(--cash);border-radius:6px;padding:2px 6px;background:#eff6ff}
+#clock{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+main{padding:64px 12px 90px;max-width:720px;margin:0 auto}
+.tab{display:none}
+.tab.active{display:block;animation:fade .2s}
+@keyframes fade{from{opacity:.6;transform:translateY(4px)}to{opacity:1;transform:none}}
+.sticky-search{position:sticky;top:56px;background:var(--bg);padding:8px 0 12px;z-index:50;display:flex;gap:8px}
+.search{flex:1;position:relative}
+.search input{width:100%;height:52px;border:1px solid var(--border);border-radius:14px;padding:0 44px;font-size:16px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.5}
+.cart-btn{height:52px;min-width:56px;padding:0 14px;border-radius:14px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;gap:8px;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.cart-count{background:#0f172a;color:#fff;border-radius:999px;padding:2px 8px;font-size:12px;min-width:24px;text-align:center}
+.category-header{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:20px 4px 8px}
+.item-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(min-width:560px){.item-grid{grid-template-columns:1fr 1fr 1fr}}
+.item-btn{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px;text-align:left;box-shadow:0 2px 6px rgba(0,0,0,.04);min-height:100px;display:flex;flex-direction:column;justify-content:space-between;transition:.1s}
+.item-btn:active{transform:scale(.97);background:#f8fafc}
+.item-name{font-weight:700;font-size:15px;line-height:1.25;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item-meta{display:flex;justify-content:space-between;align-items:center}
+.item-price{font-weight:800;font-size:18px}
+.badge{font-size:11px;padding:4px 9px;border-radius:999px;font-weight:700}
+.stock-green{background:#dcfce7;color:#166534}
+.stock-amber{background:#fef3c7;color:#92400e}
+.stock-red{background:#fee2e2;color:#991b1b}
+.card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.04);margin-bottom:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid-4{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(min-width:480px){.grid-4{grid-template-columns:repeat(4,1fr)}}
+.stat .label{font-size:12px;color:var(--muted);font-weight:600}
+.stat .value{font-size:24px;font-weight:900;margin-top:4px;letter-spacing:-.02em}
+.row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:0}
+.row-name{flex:1;font-weight:600;font-size:14px;min-width:0}
+.row-price{width:84px}
+.row-price input{width:100%;height:42px;border:1px solid var(--border);border-radius:10px;padding:0 8px;font-size:15px;text-align:right;font-weight:600}
+.stock-ctrl{display:flex;align-items:center;gap:6px}
+.stock-ctrl button{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:20px;font-weight:700}
+.stock-val{width:34px;text-align:center;font-weight:800;font-size:15px}
+select,input[type=text],input[type=number],input[type=date],input[type=file]{height:48px;border:1px solid var(--border);border-radius:12px;padding:0 12px;font-size:15px;width:100%;background:#fff}
+button{cursor:pointer;user-select:none}
+.btn{height:50px;padding:0 18px;border-radius:12px;border:0;font-weight:700;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.1s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:#0f172a;color:#fff}
+.btn-upi{background:var(--upi);color:#fff}
+.btn-cash{background:var(--cash);color:#fff}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text)}
+.btn-danger{background:#dc2626;color:#fff}
+#cart-bar{position:fixed;left:12px;right:12px;bottom:78px;background:#0f172a;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;z-index:90;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.25);transform:translateY(150%);transition:.28s}
+#cart-bar.show{transform:translateY(0)}
+#cart-bar .info{font-weight:800;font-size:15px}
+#cart-bar .actions{display:flex;gap:8px}
+#cart-bar .btn{height:42px}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(4,1fr);z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;color:var(--muted);font-weight:700;border:0;background:transparent}
+.nav-btn.active{color:#0f172a}
+.nav-btn svg{width:26px;height:26px;stroke-width:2.2}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:.2s;backdrop-filter:blur(2px)}
+.modal-backdrop.show{opacity:1;pointer-events:auto}
+.modal{background:#fff;width:100%;max-width:520px;border-radius:28px 28px 0 0;padding:22px 18px 26px;transform:translateY(100%);transition:.28s;max-height:88vh;overflow:auto}
+.modal-backdrop.show .modal{transform:translateY(0)}
+.modal h3{margin:0 0 4px;font-size:22px;font-weight:900}
+.qty{display:flex;align-items:center;justify-content:center;gap:18px;margin:24px 0}
+.qty button{width:60px;height:60px;border-radius:16px;border:1px solid var(--border);background:#fff;font-size:30px;font-weight:300}
+.qty .num{font-size:36px;font-weight:900;width:70px;text-align:center;font-variant-numeric:tabular-nums}
+.table{width:100%;border-collapse:collapse;font-size:14px}
+.table th,.table td{padding:11px 8px;border-bottom:1px solid var(--border);text-align:left}
+.table th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:800}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.toggle{display:flex;background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;height:44px}
+.toggle button{flex:1;padding:0 14px;border:0;background:transparent;font-weight:700;color:var(--muted);font-size:14px}
+.toggle button.active{background:#0f172a;color:#fff}
+.hidden{display:none !important}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <div class="shop" id="shopName" contenteditable="true" spellcheck="false"></div>
+  <div id="clock">--:--</div>
+</header>
+
+<main>
+  <section id="tab-sell" class="tab active">
+    <div class="sticky-search">
+      <div class="search">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="searchInput" placeholder="Search items, e.g. parle, milk..." inputmode="search">
+      </div>
+      <button class="cart-btn" onclick="checkout()" aria-label="Cart">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+    <div id="sellList"></div>
+  </section>
+
+  <section id="tab-inventory" class="tab">
+    <div class="grid-4">
+      <div class="card stat"><div class="label">Total SKUs</div><div class="value" id="statSkus">0</div></div>
+      <div class="card stat"><div class="label">Low Stock</div><div class="value" id="statLow">0</div></div>
+      <div class="card stat"><div class="label">Out of Stock</div><div class="value" id="statOut">0</div></div>
+      <div class="card stat"><div class="label">Stock Value</div><div class="value" id="statValue">₹0</div></div>
+    </div>
+    <div id="inventoryList"></div>
+  </section>
+
+  <section id="tab-reports" class="tab">
+    <div class="card">
+      <div class="grid-2">
+        <div><label style="font-size:12px;color:#64748b;font-weight:600">From</label><input type="date" id="repFrom"></div>
+        <div><label style="font-size:12px;color:#64748b;font-weight:600">To</label><input type="date" id="repTo"></div>
+      </div>
+    </div>
+    <div class="grid-4">
+      <div class="card stat"><div class="label">Total Sales</div><div class="value" id="repTotal">₹0</div></div>
+      <div class="card stat"><div class="label">UPI</div><div class="value" id="repUpi">₹0</div></div>
+      <div class="card stat"><div class="label">Cash</div><div class="value" id="repCash">₹0</div></div>
+      <div class="card stat"><div class="label">Bills</div><div class="value" id="repBills">0</div></div>
+    </div>
+    <div class="toolbar">
+      <div class="toggle">
+        <button id="toggleDate" class="active" onclick="setReportView('date')">Date-wise</button>
+        <button id="toggleItem" onclick="setReportView('item')">Item-wise</button>
+      </div>
+      <button class="btn btn-ghost" onclick="printPDF()">Print PDF</button><button class="btn btn-ghost" onclick="shareDailyItems()">WhatsApp Items</button>
+      <button class="btn btn-ghost" onclick="shareWhatsApp()">Share WhatsApp</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="overflow:auto;max-height:52vh">
+        <table class="table" id="reportTable"></table>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-settings" class="tab">
+    <div class="card">
+      <h3 style="margin:0 0 12px;font-weight:900">Shop Details</h3>
+      <div style="display:grid;gap:10px">
+        <input id="setOwner" placeholder="Owner Name" type="text">
+        <input id="setPhone" placeholder="Phone" type="text" inputmode="tel">
+        <input id="setUpi" placeholder="UPI ID (e.g. shop@upi)" type="text">
+        <button class="btn btn-primary" onclick="saveSettings()">Save Details</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;font-weight:900">Manage Categories</h3>
+      <div id="catList" style="display:grid;gap:8px"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input id="newCat" placeholder="New category name" type="text">
+        <button class="btn btn-ghost" onclick="addCategory()">Add</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;font-weight:900">Add Inventory Item</h3>
+      <div style="display:grid;gap:10px">
+        <input id="newName" placeholder="Item name" type="text">
+        <div class="grid-2">
+          <input id="newPrice" placeholder="Price ₹" type="number" min="0">
+          <input id="newStock" placeholder="Opening stock" type="number" min="0">
+        </div>
+        <select id="newCategory"></select>
+        <button class="btn btn-primary" onclick="addItem()">Add Item</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;font-weight:900">Backup & Restore</h3>
+      <div class="grid-2">
+        <button class="btn btn-ghost" onclick="backupNow()">Backup Now</button>
+        <label class="btn btn-ghost" style="cursor:pointer">Restore<input type="file" id="restoreFile" accept=".json" class="hidden" onchange="restoreBackup(event)"></label>
+        <button class="btn btn-ghost" onclick="downloadCSV()">Download CSV</button>
+        <label class="btn btn-ghost" style="cursor:pointer">Upload CSV<input type="file" id="csvFile" accept=".csv" class="hidden" onchange="uploadCSV(event)"></label>
+      </div>
+      <button class="btn btn-danger" style="margin-top:12px;width:100%" onclick="resetDemo()">Reset to Demo</button>
+    </div>
+  </section>
+</main>
+
+<div id="cart-bar">
+  <div class="info" id="cartInfo">0 items • ₹0</div>
+  <div class="actions">
+    <button class="btn btn-ghost" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)" onclick="clearCart()">Clear</button>
+    <button class="btn btn-primary" style="background:#fff;color:#0f172a" onclick="checkout()">Checkout</button>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-tab="sell" onclick="switchTab('sell')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    Sell
+  </button>
+  <button class="nav-btn" data-tab="inventory" onclick="switchTab('inventory')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+    Inventory
+  </button>
+  <button class="nav-btn" data-tab="reports" onclick="switchTab('reports')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Reports
+  </button>
+  <button class="nav-btn" data-tab="settings" onclick="switchTab('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 0 0 0-1.82-.33 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 0 0 0 .33-1.82 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+</nav>
+
+<div id="modal" class="modal-backdrop" onclick="closeModal(event)">
+  <div class="modal" id="modalContent" onclick="event.stopPropagation()"></div>
+</div>
+
+<script>
+let data=null; let cart=[]; let currentItem=null; let qty=1; let reportView='date';
+
+function loadData(){
+  const stored=localStorage.getItem('kirana_v4');
+  if(stored){ data=JSON.parse(stored); }
+  else{
+    data={ settings:{ shopName:'Shree Ganesh Kirana', owner:'Ramesh Kumar', phone:'9876543210', upiId:'ramesh@upi', categories:["Biscuits & Snacks","Beverages","Grocery","Dairy","Personal Care","General"] },
+      inventory:[
+        {id:1,name:"Parle-G Biscuit 100g",price:10,stock:48,category:"Biscuits & Snacks",trackStock:true},
+        {id:2,name:"Good Day Cookies",price:30,stock:24,category:"Biscuits & Snacks",trackStock:true},
+        {id:3,name:"Lays Classic 52g",price:20,stock:3,category:"Biscuits & Snacks",trackStock:true},
+        {id:4,name:"Coca Cola 750ml",price:40,stock:15,category:"Beverages",trackStock:true},
+        {id:5,name:"Thums Up 750ml",price:40,stock:0,category:"Beverages",trackStock:true},
+        {id:6,name:"Tata Salt 1kg",price:28,stock:50,category:"Grocery",trackStock:true},
+        {id:7,name:"Aashirvaad Atta 5kg",price:260,stock:12,category:"Grocery",trackStock:true},
+        {id:8,name:"Fortune Oil 1L",price:155,stock:6,category:"Grocery",trackStock:true},
+        {id:9,name:"Amul Milk 500ml",price:27,stock:20,category:"Dairy",trackStock:true},
+        {id:10,name:"Amul Butter 100g",price:55,stock:2,category:"Dairy",trackStock:true},
+        {id:11,name:"Colgate Strong Teeth 200g",price:95,stock:18,category:"Personal Care",trackStock:true},
+        {id:12,name:"Wheel Powder 1kg",price:70,stock:9,category:"Personal Care",trackStock:true},
+        {id:13,name:"Chai (Tea) Cup",price:10,stock:0,category:"Beverages",trackStock:false},
+        {id:14,name:"Samosa (fresh)",price:15,stock:0,category:"General",trackStock:false}
+      ], sales:[]
+    };
+    saveData();
+  }
+}
+function saveData(){ localStorage.setItem('kirana_v4', JSON.stringify(data)); }
+
+function init(){
+  loadData();
+  document.getElementById('shopName').textContent=data.settings.shopName;
+  document.getElementById('shopName').addEventListener('blur',()=>{ data.settings.shopName=document.getElementById('shopName').textContent.trim()||'My Kirana'; saveData(); });
+  startClock();
+  const from=document.getElementById('repFrom'), to=document.getElementById('repTo');
+  from.addEventListener('change',renderReports); to.addEventListener('change',renderReports);
+  document.getElementById('searchInput').addEventListener('input',renderSell);
+  renderSell(); renderInventory(); renderReports(); renderSettings(); updateCartUI();
+}
+document.addEventListener('DOMContentLoaded', init);
+
+function startClock(){ updateClock(); setInterval(updateClock,1000); }
+function updateClock(){ const now=new Date(); const s=new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true,day:'2-digit',month:'short'}).format(now); document.getElementById('clock').textContent=s+' IST'; }
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  if(name==='inventory') renderInventory();
+  if(name==='reports') renderReports();
+  if(name==='settings') renderSettings();
+}
+
+function renderSell(){
+  const q=document.getElementById('searchInput').value.toLowerCase().trim();
+  const list=document.getElementById('sellList'); list.innerHTML='';
+  data.settings.categories.forEach(cat=>{
+    const items=data.inventory.filter(i=>i.category===cat && (!q || i.name.toLowerCase().includes(q)));
+    if(items.length===0) return;
+    const h=document.createElement('div'); h.className='category-header'; h.textContent=cat; list.appendChild(h);
+    const grid=document.createElement('div'); grid.className='item-grid';
+    items.forEach(it=>{
+      const cls=it.stock===0?'stock-red':it.stock<=4?'stock-amber':'stock-green';
+      const btn=document.createElement('button'); btn.className='item-btn'; btn.onclick=()=>openModal(it.id);
+      btn.innerHTML='<div class="item-name">'+it.name+'</div><div class="item-meta"><div class="item-price">₹'+it.price+'</div><span class="badge '+cls+'">'+it.stock+'</span></div>';
+      if(it.stock===0) btn.style.opacity='.6';
+      grid.appendChild(btn);
+    });
+    list.appendChild(grid);
+  });
+  if(list.innerHTML==='') list.innerHTML='<div class="empty">No items found</div>';
+}
+
+function openModal(id){
+  currentItem=data.inventory.find(i=>i.id===id); if(!currentItem) return; qty=1;
+  const cls=currentItem.stock===0?'stock-red':currentItem.stock<=4?'stock-amber':'stock-green';
+  const disabled=currentItem.stock===0?'disabled style="opacity:.5;pointer-events:none"':'';
+  const content=document.getElementById('modalContent');
+  content.innerHTML='<h3>'+currentItem.name+'</h3><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><div style="font-size:26px;font-weight:900">₹'+currentItem.price+'</div><span class="badge '+cls+'">Stock: '+currentItem.stock+'</span></div><div class="qty"><button onclick="changeQty(-1)" '+disabled+'>−</button><div class="num" id="qtyNum">1</div><button onclick="changeQty(1)" '+disabled+'>+</button></div><div style="display:grid;gap:10px"><button class="btn btn-primary" onclick="addToCart()" '+disabled+'>Add to Cart</button><div class="grid-2"><button class="btn btn-upi" onclick="confirmSale(\'UPI\')" '+disabled+'>Sell via UPI</button><button class="btn btn-cash" onclick="confirmSale(\'Cash\')" '+disabled+'>Sell via Cash</button></div></div>';
+  document.getElementById('modal').classList.add('show');
+}
+function changeQty(d){ if(!currentItem) return; qty=Math.max(1, Math.min(currentItem.stock, qty+d)); const el=document.getElementById('qtyNum'); if(el) el.textContent=qty; }
+function closeModal(e){ if(e && e.target.id!=='modal') return; document.getElementById('modal').classList.remove('show'); }
+
+function addToCart(){
+  if(!currentItem || currentItem.stock<qty){ alert('Not enough stock'); return; }
+  const ex=cart.find(c=>c.id===currentItem.id);
+  if(ex){ ex.qty=Math.min(currentItem.stock, ex.qty+qty); } else { cart.push({id:currentItem.id,name:currentItem.name,price:currentItem.price,qty}); }
+  closeModal(); updateCartUI();
+}
+function updateCartUI(){
+  const count=cart.reduce((s,i)=>s+i.qty,0); const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  document.getElementById('cartCount').textContent=count;
+  document.getElementById('cartInfo').textContent=count+' items • ₹'+total;
+  document.getElementById('cart-bar').classList.toggle('show',count>0);
+}
+function clearCart(){ cart=[]; updateCartUI(); }
+function checkout(){
+  if(cart.length===0){ alert('Cart is empty'); return; }
+  const content=document.getElementById('modalContent');
+  let html='<h3>Cart</h3><div style="max-height:40vh;overflow:auto;margin:12px 0">';
+  cart.forEach((it,idx)=>{ html+='<div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e2e8f0"><div><div style="font-weight:700">'+it.name+'</div><div style="font-size:13px;color:#64748b">₹'+it.price+' × '+it.qty+'</div></div><div style="display:flex;align-items:center;gap:12px"><div style="font-weight:800">₹'+(it.price*it.qty)+'</div><button onclick="removeFromCart('+idx+')" style="border:0;background:#fee2e2;color:#991b1b;width:30px;height:30px;border-radius:8px;font-size:18px">×</button></div></div>'; });
+  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  html+='</div><div style="display:flex;justify-content:space-between;font-size:20px;font-weight:900;margin:14px 0"><span>Total</span><span>₹'+total+'</span></div><div class="grid-2"><button class="btn btn-upi" onclick="confirmSale(\'UPI\',true)">UPI Pay</button><button class="btn btn-cash" onclick="confirmSale(\'Cash\',true)">Cash Pay</button></div>';
+  content.innerHTML=html; document.getElementById('modal').classList.add('show');
+}
+function removeFromCart(idx){ cart.splice(idx,1); updateCartUI(); if(cart.length===0) closeModal(); else checkout(); }
+
+function confirmSale(payment,isCart){
+  let items=[]; if(isCart){ items=[...cart]; } else { if(!currentItem) return; items=[{id:currentItem.id,name:currentItem.name,price:currentItem.price,qty}]; }
+  for(let it of items){ const inv=data.inventory.find(i=>i.id===it.id); if(!inv || inv.stock<it.qty){ alert('Not enough stock for '+it.name); return; } }
+  items.forEach(it=>{ const inv=data.inventory.find(i=>i.id===it.id); inv.stock-=it.qty; });
+  const total=items.reduce((s,i)=>s+i.price*i.qty,0);
+  const sale={id:Date.now(),date:new Date().toISOString().slice(0,10),timestamp:Date.now(),items,total,payment};
+  data.sales.push(sale); saveData();
+  if(isCart) cart=[]; else closeModal();
+  updateCartUI(); renderSell(); renderInventory(); renderReports();
+  alert('Sale recorded: ₹'+total+' via '+payment);
+}
+
+function renderInventory(){
+  document.getElementById('statSkus').textContent=data.inventory.length;
+  const low=data.inventory.filter(i=>i.stock>0 && i.stock<=4).length;
+  const out=data.inventory.filter(i=>i.stock===0).length;
+  const value=data.inventory.reduce((s,i)=>s+i.price*i.stock,0);
+  document.getElementById('statLow').textContent=low;
+  document.getElementById('statOut').textContent=out;
+  document.getElementById('statValue').textContent='₹'+value;
+  const list=document.getElementById('inventoryList'); list.innerHTML='';
+  data.settings.categories.forEach(cat=>{
+    const items=data.inventory.filter(i=>i.category===cat); if(items.length===0) return;
+    const card=document.createElement('div'); card.className='card'; card.innerHTML='<div class="category-header" style="margin:0 0 8px">'+cat+'</div>';
+    items.forEach(it=>{
+      const row=document.createElement('div'); row.className='row';
+      row.innerHTML='<div class="row-name">'+it.name+'</div><div class="row-price"><input type="number" value="'+it.price+'" onchange="updatePrice('+it.id+',this.value)"></div><div class="stock-ctrl"><button onclick="changeStock('+it.id+',-1)">−</button><div class="stock-val">'+it.stock+'</div><button onclick="changeStock('+it.id+',10)">+10</button></div><select onchange="changeCategory('+it.id+',this.value)" style="width:110px"></select><button onclick="deleteItem('+it.id+')" style="border:0;background:#fee2e2;color:#991b1b;width:38px;height:38px;border-radius:10px;font-size:18px">×</button>';
+      const sel=row.querySelector('select'); data.settings.categories.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; if(c===it.category) o.selected=true; sel.appendChild(o); });
+      card.appendChild(row);
+    });
+    list.appendChild(card);
+  });
+}
+function updatePrice(id,val){ const it=data.inventory.find(i=>i.id===id); it.price=Math.max(0,Number(val)||0); saveData(); renderSell(); }
+function changeStock(id,delta){ const it=data.inventory.find(i=>i.id===id); it.stock=Math.max(0,it.stock+delta); saveData(); renderInventory(); renderSell(); }
+function changeCategory(id,cat){ const it=data.inventory.find(i=>i.id===id); it.category=cat; saveData(); renderInventory(); renderSell(); }
+function deleteItem(id){ if(!confirm('Delete item?')) return; data.inventory=data.inventory.filter(i=>i.id!==id); saveData(); renderInventory(); renderSell(); }
+
+function renderReports(){
+  const from=document.getElementById('repFrom'), to=document.getElementById('repTo');
+  if(!from.value){ const d=new Date(); const first=new Date(d.getFullYear(),d.getMonth(),1); from.value=first.toISOString().slice(0,10); to.value=new Date().toISOString().slice(0,10); }
+  const f=new Date(from.value); const t=new Date(to.value); t.setHours(23,59,59);
+  const sales=data.sales.filter(s=>{ const sd=new Date(s.date); return sd>=f && sd<=t; });
+  const total=sales.reduce((sum,s)=>sum+s.total,0);
+  const upi=sales.filter(s=>s.payment==='UPI').reduce((sum,s)=>sum+s.total,0);
+  const cash=sales.filter(s=>s.payment==='Cash').reduce((sum,s)=>sum+s.total,0);
+  document.getElementById('repTotal').textContent='₹'+total;
+  document.getElementById('repUpi').textContent='₹'+upi;
+  document.getElementById('repCash').textContent='₹'+cash;
+  document.getElementById('repBills').textContent=sales.length;
+  const tbl=document.getElementById('reportTable'); tbl.innerHTML='';
+  if(reportView==='date'){
+    tbl.innerHTML='<thead><tr><th>Date</th><th>Bills</th><th>UPI</th><th>Cash</th><th>Total</th></tr></thead><tbody></tbody>';
+    const byDate={}; sales.forEach(s=>{ if(!byDate[s.date]) byDate[s.date]={bills:0,upi:0,cash:0,total:0}; byDate[s.date].bills++; byDate[s.date].total+=s.total; if(s.payment==='UPI') byDate[s.date].upi+=s.total; else byDate[s.date].cash+=s.total; });
+    Object.keys(byDate).sort().reverse().forEach(d=>{ const r=byDate[d]; const tr=document.createElement('tr'); tr.innerHTML='<td>'+d+'</td><td>'+r.bills+'</td><td>₹'+r.upi+'</td><td>₹'+r.cash+'</td><td>₹'+r.total+'</td>'; tbl.querySelector('tbody').appendChild(tr); });
+  } else {
+    tbl.innerHTML='<thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead><tbody></tbody>';
+    const byItem={}; sales.forEach(s=>s.items.forEach(it=>{ if(!byItem[it.name]) byItem[it.name]={qty:0,amt:0}; byItem[it.name].qty+=it.qty; byItem[it.name].amt+=it.price*it.qty; }));
+    Object.entries(byItem).sort((a,b)=>b[1].amt-a[1].amt).forEach(([name,v])=>{ const tr=document.createElement('tr'); tr.innerHTML='<td>'+name+'</td><td>'+v.qty+'</td><td>₹'+v.amt+'</td>'; tbl.querySelector('tbody').appendChild(tr); });
+  }
+}
+function setReportView(v){ reportView=v; document.getElementById('toggleDate').classList.toggle('active',v==='date'); document.getElementById('toggleItem').classList.toggle('active',v==='item'); renderReports(); }
+function printPDF(){
+  const from=document.getElementById('repFrom').value; const to=document.getElementById('repTo').value; const shop=data.settings.shopName;
+  let content='<h2 style="margin:0 0 8px">'+shop+'</h2><p>Sales Report: '+from+' to '+to+'</p>';
+  content+='<p><b>Total:</b> '+document.getElementById('repTotal').textContent+' | <b>UPI:</b> '+document.getElementById('repUpi').textContent+' | <b>Cash:</b> '+document.getElementById('repCash').textContent+' | <b>Bills:</b> '+document.getElementById('repBills').textContent+'</p>';
+  content+='<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">'+document.getElementById('reportTable').innerHTML+'</table>';
+  const w=window.open('','_blank'); w.document.write('<html><head><title>Report</title><style>body{font-family:system-ui;padding:20px}</style></head><body>'+content+'</body></html>'); w.document.close(); w.focus();
+}
+function shareWhatsApp(){ const from=document.getElementById('repFrom').value; const to=document.getElementById('repTo').value; const text=data.settings.shopName+' Sales\n'+from+' to '+to+'\nTotal: '+document.getElementById('repTotal').textContent+' ('+document.getElementById('repBills').textContent+' bills)\nUPI: '+document.getElementById('repUpi').textContent+' | Cash: '+document.getElementById('repCash').textContent; window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank'); }
+function shareDailyItems(){ const today=new Date().toISOString().slice(0,10); const sales=data.sales.filter(s=>s.date===today); const map={}; sales.forEach(s=>s.items.forEach(it=>{ const k=it.name; if(!map[k]) map[k]={qty:0,amt:0}; map[k].qty+=it.qty; map[k].amt+=it.price*it.qty; })); let lines=[]; let i=1; Object.entries(map).sort((a,b)=>b[1].qty-a[1].qty).forEach(([name,v])=>{ lines.push(i+'. '+name+' - '+v.qty+' pcs - ₹'+v.amt); i++; }); const total=sales.reduce((s,x)=>s+x.total,0); const upi=sales.filter(x=>x.payment==='UPI').reduce((s,x)=>s+x.total,0); const cash=total-upi; const text='*' + data.settings.shopName + ' - Daily Item Sales*\nDate: '+today.split('-').reverse().join('-')+'\n\n'+(lines.length?lines.join('\n'):'No sales today')+'\n\nTotal: ₹'+total+' ('+sales.length+' bills)\nUPI: ₹'+upi+' | Cash: ₹'+cash; window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank'); }
+
+function renderSettings(){
+  document.getElementById('setOwner').value=data.settings.owner||''; document.getElementById('setPhone').value=data.settings.phone||''; document.getElementById('setUpi').value=data.settings.upiId||'';
+  const catList=document.getElementById('catList'); catList.innerHTML='';
+  data.settings.categories.forEach((c,idx)=>{ const div=document.createElement('div'); div.style.display='flex'; div.style.gap='8px'; div.innerHTML='<input type="text" value="'+c+'" data-idx="'+idx+'" style="flex:1"><button class="btn btn-ghost" onclick="renameCategory('+idx+',this.previousElementSibling.value)">Save</button><button class="btn btn-danger" onclick="deleteCategory('+idx+')" '+(c==='General'?'disabled':'')+'>Del</button>'; catList.appendChild(div); });
+  const sel=document.getElementById('newCategory'); sel.innerHTML=''; data.settings.categories.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+}
+function saveSettings(){ data.settings.owner=document.getElementById('setOwner').value.trim(); data.settings.phone=document.getElementById('setPhone').value.trim(); data.settings.upiId=document.getElementById('setUpi').value.trim(); saveData(); alert('Saved'); }
+function renameCategory(idx,newName){ newName=newName.trim(); if(!newName) return; const old=data.settings.categories[idx]; data.settings.categories[idx]=newName; data.inventory.forEach(i=>{ if(i.category===old) i.category=newName; }); saveData(); renderSettings(); renderSell(); renderInventory(); }
+function deleteCategory(idx){ const cat=data.settings.categories[idx]; if(cat==='General'){ alert('Cannot delete General'); return; } const used=data.inventory.some(i=>i.category===cat); if(used){ alert('Cannot delete: items exist in this category. Move them first.'); return; } data.settings.categories.splice(idx,1); saveData(); renderSettings(); }
+function addCategory(){ const name=document.getElementById('newCat').value.trim(); if(!name) return; if(data.settings.categories.includes(name)){ alert('Exists'); return; } data.settings.categories.push(name); document.getElementById('newCat').value=''; saveData(); renderSettings(); }
+function addItem(){ const name=document.getElementById('newName').value.trim(); const price=Number(document.getElementById('newPrice').value); const stock=Number(document.getElementById('newStock').value); const cat=document.getElementById('newCategory').value; if(!name||isNaN(price)||isNaN(stock)){ alert('Enter valid details'); return; } const id=Date.now(); data.inventory.push({id,name,price,stock,category:cat}); saveData(); document.getElementById('newName').value=''; document.getElementById('newPrice').value=''; document.getElementById('newStock').value=''; renderInventory(); renderSell(); alert('Item added'); }
+
+function backupNow(){ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='kirana-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url); }
+function restoreBackup(e){ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ try{ const d=JSON.parse(reader.result); if(d.settings && d.inventory && d.sales){ data=d; saveData(); location.reload(); } else alert('Invalid file'); }catch{ alert('Invalid JSON'); } }; reader.readAsText(file); }
+function downloadCSV(){ let csv='name,price,stock,category\n'; data.inventory.forEach(i=>{ csv+='"'+i.name.replace(/"/g,'""')+'",'+i.price+','+i.stock+',"'+i.category+'"\n'; }); const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='inventory.csv'; a.click(); URL.revokeObjectURL(url); }
+function uploadCSV(e){ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ const lines=reader.result.split('\n').slice(1); lines.forEach(line=>{ if(!line.trim()) return; const parts=line.match(/(".*?"|[^,]+)/g); if(!parts||parts.length<4) return; const name=parts[0].replace(/^"|"$/g,'').replace(/""/g,'"'); const price=Number(parts[1]); const stock=Number(parts[2]); const cat=parts[3].replace(/^"|"$/g,''); const existing=data.inventory.find(i=>i.name.toLowerCase()===name.toLowerCase()); if(existing){ existing.price=price; existing.stock=stock; existing.category=cat; } else { data.inventory.push({id:Date.now()+Math.random(),name,price,stock,category:cat}); if(!data.settings.categories.includes(cat)) data.settings.categories.push(cat); } }); saveData(); renderInventory(); renderSell(); renderSettings(); alert('CSV imported'); }; reader.readAsText(file); }
+function resetDemo(){ if(!confirm('Reset all data to demo? This will erase everything.')) return; localStorage.removeItem('kirana_v4'); location.reload(); }
+</script>
+</body>
+</html>
