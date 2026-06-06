@@ -137,13 +137,17 @@ button{cursor:pointer;user-select:none}
         <button id="toggleDate" class="active" onclick="setReportView('date')">Date-wise</button>
         <button id="toggleItem" onclick="setReportView('item')">Item-wise</button>
       </div>
-      <button class="btn btn-ghost" onclick="printPDF()">Print PDF</button><button class="btn btn-ghost" onclick="shareDailyItems()">WhatsApp Items</button>
+      <button class="btn btn-ghost" onclick="printPDF()">Print PDF</button>
       <button class="btn btn-ghost" onclick="shareWhatsApp()">Share WhatsApp</button>
     </div>
     <div class="card" style="padding:0;overflow:hidden">
       <div style="overflow:auto;max-height:52vh">
         <table class="table" id="reportTable"></table>
       </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3 style="margin:0 0 12px;font-weight:900">Recent Bills</h3>
+      <div id="billsList" style="max-height:40vh;overflow:auto"></div>
     </div>
   </section>
 
@@ -215,7 +219,7 @@ button{cursor:pointer;user-select:none}
     Reports
   </button>
   <button class="nav-btn" data-tab="settings" onclick="switchTab('settings')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 0 0 0-1.82-.33 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 0 0 0 .33-1.82 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0 .33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82-.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     Settings
   </button>
 </nav>
@@ -229,24 +233,22 @@ let data=null; let cart=[]; let currentItem=null; let qty=1; let reportView='dat
 
 function loadData(){
   const stored=localStorage.getItem('kirana_v4');
-  if(stored){ data=JSON.parse(stored); }
+  if(stored){ data=JSON.parse(stored); if(!data.settings.lastClosedDate) data.settings.lastClosedDate=''; }
   else{
-    data={ settings:{ shopName:'Shree Ganesh Kirana', owner:'Ramesh Kumar', phone:'9876543210', upiId:'ramesh@upi', categories:["Biscuits & Snacks","Beverages","Grocery","Dairy","Personal Care","General"] },
+    data={ settings:{ shopName:'Shree Ganesh Kirana', owner:'Ramesh Kumar', phone:'9876543210', upiId:'ramesh@upi', categories:["Biscuits & Snacks","Beverages","Grocery","Dairy","Personal Care","General"], lastClosedDate:'' },
       inventory:[
-        {id:1,name:"Parle-G Biscuit 100g",price:10,stock:48,category:"Biscuits & Snacks",trackStock:true},
-        {id:2,name:"Good Day Cookies",price:30,stock:24,category:"Biscuits & Snacks",trackStock:true},
-        {id:3,name:"Lays Classic 52g",price:20,stock:3,category:"Biscuits & Snacks",trackStock:true},
-        {id:4,name:"Coca Cola 750ml",price:40,stock:15,category:"Beverages",trackStock:true},
-        {id:5,name:"Thums Up 750ml",price:40,stock:0,category:"Beverages",trackStock:true},
-        {id:6,name:"Tata Salt 1kg",price:28,stock:50,category:"Grocery",trackStock:true},
-        {id:7,name:"Aashirvaad Atta 5kg",price:260,stock:12,category:"Grocery",trackStock:true},
-        {id:8,name:"Fortune Oil 1L",price:155,stock:6,category:"Grocery",trackStock:true},
-        {id:9,name:"Amul Milk 500ml",price:27,stock:20,category:"Dairy",trackStock:true},
-        {id:10,name:"Amul Butter 100g",price:55,stock:2,category:"Dairy",trackStock:true},
-        {id:11,name:"Colgate Strong Teeth 200g",price:95,stock:18,category:"Personal Care",trackStock:true},
-        {id:12,name:"Wheel Powder 1kg",price:70,stock:9,category:"Personal Care",trackStock:true},
-        {id:13,name:"Chai (Tea) Cup",price:10,stock:0,category:"Beverages",trackStock:false},
-        {id:14,name:"Samosa (fresh)",price:15,stock:0,category:"General",trackStock:false}
+        {id:1,name:"Parle-G Biscuit 100g",price:10,stock:48,category:"Biscuits & Snacks"},
+        {id:2,name:"Good Day Cookies",price:30,stock:24,category:"Biscuits & Snacks"},
+        {id:3,name:"Lays Classic 52g",price:20,stock:3,category:"Biscuits & Snacks"},
+        {id:4,name:"Coca Cola 750ml",price:40,stock:15,category:"Beverages"},
+        {id:5,name:"Thums Up 750ml",price:40,stock:0,category:"Beverages"},
+        {id:6,name:"Tata Salt 1kg",price:28,stock:50,category:"Grocery"},
+        {id:7,name:"Aashirvaad Atta 5kg",price:260,stock:12,category:"Grocery"},
+        {id:8,name:"Fortune Oil 1L",price:155,stock:6,category:"Grocery"},
+        {id:9,name:"Amul Milk 500ml",price:27,stock:20,category:"Dairy"},
+        {id:10,name:"Amul Butter 100g",price:55,stock:2,category:"Dairy"},
+        {id:11,name:"Colgate Strong Teeth 200g",price:95,stock:18,category:"Personal Care"},
+        {id:12,name:"Wheel Powder 1kg",price:70,stock:9,category:"Personal Care"}
       ], sales:[]
     };
     saveData();
@@ -259,6 +261,7 @@ function init(){
   document.getElementById('shopName').textContent=data.settings.shopName;
   document.getElementById('shopName').addEventListener('blur',()=>{ data.settings.shopName=document.getElementById('shopName').textContent.trim()||'My Kirana'; saveData(); });
   startClock();
+  setInterval(checkDayClose,60000); checkDayClose();
   const from=document.getElementById('repFrom'), to=document.getElementById('repTo');
   from.addEventListener('change',renderReports); to.addEventListener('change',renderReports);
   document.getElementById('searchInput').addEventListener('input',renderSell);
@@ -344,6 +347,40 @@ function confirmSale(payment,isCart){
   updateCartUI(); renderSell(); renderInventory(); renderReports();
   alert('Sale recorded: ₹'+total+' via '+payment);
 }
+function editBillPayment(id){
+  const sale=data.sales.find(s=>s.id===id); if(!sale) return;
+  const newPay=sale.payment==='UPI'?'Cash':'UPI';
+  if(confirm('Change payment from '+sale.payment+' to '+newPay+'?')){
+    sale.payment=newPay; saveData(); renderReports();
+    alert('Bill updated to '+newPay);
+  }
+}
+function cancelBill(id){
+  const sale=data.sales.find(s=>s.id===id); if(!sale) return;
+  if(!confirm('Cancel this bill? Stock will be restored.')) return;
+  sale.items.forEach(it=>{ const inv=data.inventory.find(i=>i.id===it.id); if(inv) inv.stock+=it.qty; });
+  data.sales=data.sales.filter(s=>s.id!==id);
+  saveData(); renderReports(); renderInventory(); renderSell();
+  alert('Bill cancelled and stock restored');
+}
+function checkDayClose(){
+  const now=new Date();
+  const ist=new Date(now.toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  const today=ist.toISOString().slice(0,10);
+  const hh=ist.getHours(); const mm=ist.getMinutes();
+  if(hh===0 && mm===0){
+    if(data.settings.lastClosedDate!==today){
+      data.settings.lastClosedDate=today; saveData();
+      const yesterday=new Date(ist); yesterday.setDate(yesterday.getDate()-1);
+      const yStr=yesterday.toISOString().slice(0,10);
+      document.getElementById('repFrom').value=yStr;
+      document.getElementById('repTo').value=yStr;
+      renderReports();
+      setTimeout(()=>{ shareWhatsApp(); }, 1000);
+    }
+  }
+}
+
 
 function renderInventory(){
   document.getElementById('statSkus').textContent=data.inventory.length;
@@ -359,7 +396,7 @@ function renderInventory(){
     const card=document.createElement('div'); card.className='card'; card.innerHTML='<div class="category-header" style="margin:0 0 8px">'+cat+'</div>';
     items.forEach(it=>{
       const row=document.createElement('div'); row.className='row';
-      row.innerHTML='<div class="row-name">'+it.name+'</div><div class="row-price"><input type="number" value="'+it.price+'" onchange="updatePrice('+it.id+',this.value)"></div><div class="stock-ctrl"><button onclick="changeStock('+it.id+',-1)">−</button><div class="stock-val">'+it.stock+'</div><button onclick="changeStock('+it.id+',10)">+10</button></div><select onchange="changeCategory('+it.id+',this.value)" style="width:110px"></select><button onclick="deleteItem('+it.id+')" style="border:0;background:#fee2e2;color:#991b1b;width:38px;height:38px;border-radius:10px;font-size:18px">×</button>';
+      row.innerHTML='<div class="row-name">'+it.name+'</div><div class="row-price"><input type="number" value="'+it.price+'" onchange="updatePrice('+it.id+',this.value)"></div><div class="stock-ctrl"><button onclick="changeStock('+it.id+',-1)">−</button><div class="stock-val">'+it.stock+'</div><button onclick="changeStock('+it.id+',1)">+1</button></div><select onchange="changeCategory('+it.id+',this.value)" style="width:110px"></select><button onclick="deleteItem('+it.id+')" style="border:0;background:#fee2e2;color:#991b1b;width:38px;height:38px;border-radius:10px;font-size:18px">×</button>';
       const sel=row.querySelector('select'); data.settings.categories.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; if(c===it.category) o.selected=true; sel.appendChild(o); });
       card.appendChild(row);
     });
@@ -393,6 +430,18 @@ function renderReports(){
     const byItem={}; sales.forEach(s=>s.items.forEach(it=>{ if(!byItem[it.name]) byItem[it.name]={qty:0,amt:0}; byItem[it.name].qty+=it.qty; byItem[it.name].amt+=it.price*it.qty; }));
     Object.entries(byItem).sort((a,b)=>b[1].amt-a[1].amt).forEach(([name,v])=>{ const tr=document.createElement('tr'); tr.innerHTML='<td>'+name+'</td><td>'+v.qty+'</td><td>₹'+v.amt+'</td>'; tbl.querySelector('tbody').appendChild(tr); });
   }
+  const billsDiv=document.getElementById('billsList');
+  if(billsDiv){
+    billsDiv.innerHTML='';
+    sales.slice().reverse().forEach(s=>{
+      const time=new Date(s.timestamp).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+      const div=document.createElement('div');
+      div.className='row';
+      div.innerHTML='<div class="row-name"><div style="font-weight:700">Bill #'+s.id.toString().slice(-6)+'</div><div style="font-size:12px;color:#64748b">'+s.date+' '+time+' • '+s.items.length+' items</div></div><div style="font-weight:800;margin-right:8px">₹'+s.total+'</div><span class="badge '+(s.payment==='UPI'?'stock-green':'stock-amber')+'" style="margin-right:8px">'+s.payment+'</span><button class="btn btn-ghost" style="height:34px;padding:0 10px;font-size:12px" onclick="editBillPayment('+s.id+')">Edit</button><button class="btn btn-danger" style="height:34px;padding:0 10px;font-size:12px;margin-left:6px" onclick="cancelBill('+s.id+')">Cancel</button>';
+      billsDiv.appendChild(div);
+    });
+    if(sales.length===0) billsDiv.innerHTML='<div class="empty">No bills in this period</div>';
+  }
 }
 function setReportView(v){ reportView=v; document.getElementById('toggleDate').classList.toggle('active',v==='date'); document.getElementById('toggleItem').classList.toggle('active',v==='item'); renderReports(); }
 function printPDF(){
@@ -402,8 +451,7 @@ function printPDF(){
   content+='<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">'+document.getElementById('reportTable').innerHTML+'</table>';
   const w=window.open('','_blank'); w.document.write('<html><head><title>Report</title><style>body{font-family:system-ui;padding:20px}</style></head><body>'+content+'</body></html>'); w.document.close(); w.focus();
 }
-function shareWhatsApp(){ const from=document.getElementById('repFrom').value; const to=document.getElementById('repTo').value; const text=data.settings.shopName+' Sales\n'+from+' to '+to+'\nTotal: '+document.getElementById('repTotal').textContent+' ('+document.getElementById('repBills').textContent+' bills)\nUPI: '+document.getElementById('repUpi').textContent+' | Cash: '+document.getElementById('repCash').textContent; window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank'); }
-function shareDailyItems(){ const today=new Date().toISOString().slice(0,10); const sales=data.sales.filter(s=>s.date===today); const map={}; sales.forEach(s=>s.items.forEach(it=>{ const k=it.name; if(!map[k]) map[k]={qty:0,amt:0}; map[k].qty+=it.qty; map[k].amt+=it.price*it.qty; })); let lines=[]; let i=1; Object.entries(map).sort((a,b)=>b[1].qty-a[1].qty).forEach(([name,v])=>{ lines.push(i+'. '+name+' - '+v.qty+' pcs - ₹'+v.amt); i++; }); const total=sales.reduce((s,x)=>s+x.total,0); const upi=sales.filter(x=>x.payment==='UPI').reduce((s,x)=>s+x.total,0); const cash=total-upi; const text='*' + data.settings.shopName + ' - Daily Item Sales*\nDate: '+today.split('-').reverse().join('-')+'\n\n'+(lines.length?lines.join('\n'):'No sales today')+'\n\nTotal: ₹'+total+' ('+sales.length+' bills)\nUPI: ₹'+upi+' | Cash: ₹'+cash; window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank'); }
+function shareWhatsApp(){ const from=document.getElementById('repFrom').value; const to=document.getElementById('repTo').value; const f=new Date(from); const t=new Date(to); t.setHours(23,59,59); const sales=data.sales.filter(s=>{ const sd=new Date(s.date); return sd>=f && sd<=t; }); const total=sales.reduce((sum,s)=>sum+s.total,0); const upi=sales.filter(s=>s.payment==='UPI').reduce((sum,s)=>sum+s.total,0); const cash=sales.filter(s=>s.payment==='Cash').reduce((sum,s)=>sum+s.total,0); const byItem={}; sales.forEach(s=>s.items.forEach(it=>{ if(!byItem[it.name]) byItem[it.name]={qty:0,amt:0}; byItem[it.name].qty+=it.qty; byItem[it.name].amt+=it.price*it.qty; })); let itemList=''; Object.entries(byItem).sort((a,b)=>b[1].amt-a[1].amt).forEach(([name,v])=>{ itemList+='\n• '+name+' x'+v.qty+' = ₹'+v.amt; }); const text=data.settings.shopName+' - Daily Sales\n'+from+(from!==to?' to '+to:'')+'\nTotal: ₹'+total+' ('+sales.length+' bills)\nUPI: ₹'+upi+' | Cash: ₹'+cash+(itemList?'\n\nItems Sold:'+itemList:''); window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank'); }
 
 function renderSettings(){
   document.getElementById('setOwner').value=data.settings.owner||''; document.getElementById('setPhone').value=data.settings.phone||''; document.getElementById('setUpi').value=data.settings.upiId||'';
