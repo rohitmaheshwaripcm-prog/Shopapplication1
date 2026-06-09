@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -507,7 +508,7 @@ function backupNow(){ const blob=new Blob([JSON.stringify(data,null,2)],{type:'a
 function restoreBackup(e){ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ try{ const d=JSON.parse(reader.result); if(d.settings && d.inventory && d.sales){ data=d; saveData(); location.reload(); } else alert('Invalid file'); }catch{ alert('Invalid JSON'); } }; reader.readAsText(file); }
 function downloadCSV(){ let csv='name,price,stock,category\n'; data.inventory.forEach(i=>{ csv+='"'+i.name.replace(/"/g,'""')+'",'+i.price+','+i.stock+',"'+i.category+'"\n'; }); const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='inventory.csv'; a.click(); URL.revokeObjectURL(url); }
 function uploadCSV(e){ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ const lines=reader.result.split('\n').slice(1); lines.forEach(line=>{ if(!line.trim()) return; const parts=line.match(/(".*?"|[^,]+)/g); if(!parts||parts.length<4) return; const name=parts[0].replace(/^"|"$/g,'').replace(/""/g,'"'); const price=Number(parts[1]); const stock=Number(parts[2]); const cat=parts[3].replace(/^"|"$/g,''); const existing=data.inventory.find(i=>i.name.toLowerCase()===name.toLowerCase()); if(existing){ existing.price=price; existing.stock=stock; existing.category=cat; } else { data.inventory.push({id:Date.now()+Math.random(),name,price,stock,category:cat}); if(!data.settings.categories.includes(cat)) data.settings.categories.push(cat); } }); saveData(); renderInventory(); renderSell(); renderSettings(); alert('CSV imported'); }; reader.readAsText(file); }
-function resetDemo(){ if(!confirm('Reset all data to demo? This will erase everything.')) return; localStorage.removeItem('kirana_v4'); location.reload(); }
+function resetDemo(){ const pwd=prompt('Enter password to reset:'); if(pwd!=='1403'){ if(pwd!==null) alert('Wrong password'); return; } if(!confirm('Reset all data to demo? This will erase everything.')) return; localStorage.removeItem('kirana_v4'); location.reload(); }
 </script>
 </body>
 </html>
