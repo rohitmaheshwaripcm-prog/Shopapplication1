@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,7 +65,7 @@ button{cursor:pointer;user-select:none}
 #cart-bar .info{font-weight:800;font-size:15px}
 #cart-bar .actions{display:flex;gap:8px}
 #cart-bar .btn{height:42px}
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(4,1fr);z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);z-index:100;padding-bottom:env(safe-area-inset-bottom)}
 .nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;color:var(--muted);font-weight:700;border:0;background:transparent}
 .nav-btn.active{color:#0f172a}
 .nav-btn svg{width:26px;height:26px;stroke-width:2.2}
@@ -165,6 +164,33 @@ button{cursor:pointer;user-select:none}
     </div>
   </section>
 
+  <section id="tab-loss" class="tab">
+    <div class="card">
+      <h3 style="margin:0 0 12px;font-weight:900">Record Loss / Expired / Complimentary</h3>
+      <div style="display:grid;gap:10px">
+        <select id="lossReason">
+          <option value="Loss">Loss / Damage</option>
+          <option value="Expired">Expired</option>
+          <option value="Complimentary">Complimentary / Free</option>
+          <option value="Theft">Theft</option>
+        </select>
+        <input id="lossNotes" type="text" placeholder="Notes (optional, e.g. batch no.)">
+        <div id="lossCart" style="border:1px dashed var(--border);border-radius:12px;padding:10px;min-height:60px"></div>
+        <div class="grid-2">
+          <button class="btn btn-ghost" onclick="openLossPicker()">+ Add Item</button>
+          <button class="btn btn-danger" onclick="saveLoss()">Save Record</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="margin:0;font-weight:900">History</h3>
+        <button class="btn btn-ghost" style="height:36px" onclick="shareLossWhatsApp()">Share WhatsApp</button>
+      </div>
+      <div id="lossHistory" style="max-height:50vh;overflow:auto"></div>
+    </div>
+  </section>
+
   <section id="tab-settings" class="tab">
     <div class="card">
       <h3 style="margin:0 0 12px;font-weight:900">Shop Details</h3>
@@ -232,8 +258,12 @@ button{cursor:pointer;user-select:none}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
     Reports
   </button>
+  <button class="nav-btn" data-tab="loss" onclick="switchTab('loss')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    Loss
+  </button>
   <button class="nav-btn" data-tab="settings" onclick="switchTab('settings')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0 .33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82-.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0 .33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     Settings
   </button>
 </nav>
@@ -243,11 +273,11 @@ button{cursor:pointer;user-select:none}
 </div>
 
 <script>
-let data=null; let cart=[]; let currentItem=null; let qty=1; let reportView='date';
+let data=null; let cart=[]; let currentItem=null; let qty=1; let reportView='date'; let lossCart=[];
 
 function loadData(){
   const stored=localStorage.getItem('kirana_v4');
-  if(stored){ data=JSON.parse(stored); if(!data.settings.lastClosedDate) data.settings.lastClosedDate=''; }
+  if(stored){ data=JSON.parse(stored); if(!data.settings.lastClosedDate) data.settings.lastClosedDate=''; if(!data.losses) data.losses=[]; }
   else{
     data={ settings:{ shopName:'Shree Ganesh Kirana', owner:'Ramesh Kumar', phone:'9876543210', upiId:'ramesh@upi', categories:["Biscuits & Snacks","Beverages","Grocery","Dairy","Personal Care","General"], lastClosedDate:'' },
       inventory:[
@@ -263,7 +293,7 @@ function loadData(){
         {id:10,name:"Amul Butter 100g",price:55,stock:2,category:"Dairy"},
         {id:11,name:"Colgate Strong Teeth 200g",price:95,stock:18,category:"Personal Care"},
         {id:12,name:"Wheel Powder 1kg",price:70,stock:9,category:"Personal Care"}
-      ], sales:[]
+      ], sales:[], losses:[]
     };
     saveData();
   }
@@ -293,6 +323,7 @@ function switchTab(name){
   if(name==='inventory') renderInventory();
   if(name==='reports') renderReports();
   if(name==='settings') renderSettings();
+  if(name==='loss'){ renderLossCart(); renderLossHistory(); }
 }
 
 function renderSell(){
@@ -394,6 +425,80 @@ function checkDayClose(){
     }
   }
 }
+function openLossPicker(){
+  const content=document.getElementById('modalContent');
+  let html='<h3>Select Item for Loss</h3><input id="lossSearch" placeholder="Search item..." style="margin:12px 0" oninput="renderLossPicker()"><div id="lossPickerList" style="max-height:50vh;overflow:auto"></div>';
+  content.innerHTML=html; document.getElementById('modal').classList.add('show'); renderLossPicker();
+}
+function renderLossPicker(){
+  const q=(document.getElementById('lossSearch')?.value||'').toLowerCase();
+  const list=document.getElementById('lossPickerList'); if(!list) return;
+  list.innerHTML='';
+  data.inventory.filter(i=>!q||i.name.toLowerCase().includes(q)).slice(0,50).forEach(it=>{
+    const div=document.createElement('div');
+    div.className='row'; div.style.cursor='pointer';
+    div.innerHTML='<div class="row-name">'+it.name+'</div><div style="font-weight:700">Stock:'+it.stock+'</div>';
+    div.onclick=()=>{ const qty=Number(prompt('Quantity to record (max '+it.stock+'):', '1')||0); if(qty>0 && qty<=it.stock){ const ex=lossCart.find(c=>c.id===it.id); if(ex) ex.qty+=qty; else lossCart.push({id:it.id,name:it.name,price:it.price,qty}); closeModal(); renderLossCart(); } else if(qty>it.stock){ alert('Not enough stock'); } };
+    list.appendChild(div);
+  });
+}
+function renderLossCart(){
+  const div=document.getElementById('lossCart'); if(!div) return;
+  if(lossCart.length===0){ div.innerHTML='<div style="color:#64748b;text-align:center;padding:10px">No items added</div>'; return; }
+  div.innerHTML='';
+  let total=0;
+  lossCart.forEach((it,idx)=>{
+    total+=it.price*it.qty;
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e2e8f0';
+    row.innerHTML='<div><div style="font-weight:600">'+it.name+'</div><div style="font-size:12px;color:#64748b">₹'+it.price+' × '+it.qty+'</div></div><div style="display:flex;align-items:center;gap:8px"><div style="font-weight:700">₹'+(it.price*it.qty)+'</div><button onclick="removeLossItem('+idx+')" style="border:0;background:#fee2e2;color:#991b1b;width:28px;height:28px;border-radius:8px">×</button></div>';
+    div.appendChild(row);
+  });
+  const t=document.createElement('div'); t.style.cssText='text-align:right;font-weight:800;margin-top:8px'; t.textContent='Total Value: ₹'+total; div.appendChild(t);
+}
+function removeLossItem(idx){ lossCart.splice(idx,1); renderLossCart(); }
+function saveLoss(){
+  if(lossCart.length===0){ alert('Add at least one item'); return; }
+  const reason=document.getElementById('lossReason').value;
+  const notes=document.getElementById('lossNotes').value.trim();
+  for(let it of lossCart){ const inv=data.inventory.find(i=>i.id===it.id); if(!inv || inv.stock<it.qty){ alert('Not enough stock for '+it.name); return; } }
+  lossCart.forEach(it=>{ const inv=data.inventory.find(i=>i.id===it.id); inv.stock-=it.qty; });
+  const total=lossCart.reduce((s,i)=>s+i.price*i.qty,0);
+  const rec={id:Date.now(),date:new Date().toISOString().slice(0,10),timestamp:Date.now(),items:[...lossCart],total,reason,notes};
+  data.losses.push(rec); saveData();
+  lossCart=[]; document.getElementById('lossNotes').value=''; renderLossCart(); renderLossHistory(); renderInventory(); renderSell();
+  alert('Recorded: '+reason+' - ₹'+total);
+}
+function renderLossHistory(){
+  const div=document.getElementById('lossHistory'); if(!div) return;
+  div.innerHTML='';
+  if(data.losses.length===0){ div.innerHTML='<div class="empty">No records yet</div>'; return; }
+  data.losses.slice().reverse().forEach(r=>{
+    const time=new Date(r.timestamp).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    const el=document.createElement('div'); el.className='card'; el.style.padding='12px'; el.style.marginBottom='8px';
+    let itemsHtml=r.items.map(it=>it.name+' ×'+it.qty).join(', ');
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:start"><div><div style="font-weight:800">'+r.reason+' <span style="font-size:12px;color:#64748b;font-weight:600">'+r.date+' '+time+'</span></div><div style="font-size:13px;margin:4px 0">'+itemsHtml+'</div>'+(r.notes?'<div style="font-size:12px;color:#64748b">Note: '+r.notes+'</div>':'')+'</div><div style="text-align:right"><div style="font-weight:900">₹'+r.total+'</div><button onclick="deleteLoss('+r.id+')" style="margin-top:6px;border:0;background:#fee2e2;color:#991b1b;padding:4px 8px;border-radius:6px;font-size:12px">Delete</button></div></div>';
+    div.appendChild(el);
+  });
+}
+function deleteLoss(id){
+  if(!confirm('Delete this record? Stock will NOT be restored automatically.')) return;
+  data.losses=data.losses.filter(r=>r.id!==id); saveData(); renderLossHistory();
+}
+function shareLossWhatsApp(){
+  if(data.losses.length===0){ alert('No loss records'); return; }
+  const month=new Date().toISOString().slice(0,7);
+  const recs=data.losses.filter(r=>r.date.startsWith(month));
+  let text=data.settings.shopName+' - Loss/Expired Report\n'+month+'\n';
+  const byReason={}; let total=0;
+  recs.forEach(r=>{ total+=r.total; if(!byReason[r.reason]) byReason[r.reason]=0; byReason[r.reason]+=r.total; });
+  text+='Total Loss Value: ₹'+total+'\n';
+  Object.entries(byReason).forEach(([k,v])=>{ text+='• '+k+': ₹'+v+'\n'; });
+  text+='\nDetails:';
+  recs.slice(-20).reverse().forEach(r=>{ text+='\n'+r.date+' - '+r.reason+' ₹'+r.total+' ('+r.items.map(i=>i.name+'×'+i.qty).join(', ')+')'; });
+  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+}
+
 
 
 function renderInventory(){
@@ -505,7 +610,7 @@ function addCategory(){ const name=document.getElementById('newCat').value.trim(
 function addItem(){ const name=document.getElementById('newName').value.trim(); const price=Number(document.getElementById('newPrice').value); const stock=Number(document.getElementById('newStock').value); const cat=document.getElementById('newCategory').value; if(!name||isNaN(price)||isNaN(stock)){ alert('Enter valid details'); return; } const id=Date.now(); data.inventory.push({id,name,price,stock,category:cat}); saveData(); document.getElementById('newName').value=''; document.getElementById('newPrice').value=''; document.getElementById('newStock').value=''; renderInventory(); renderSell(); alert('Item added'); }
 
 function backupNow(){ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='kirana-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(url); }
-function restoreBackup(e){ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ try{ const d=JSON.parse(reader.result); if(d.settings && d.inventory && d.sales){ data=d; saveData(); location.reload(); } else alert('Invalid file'); }catch{ alert('Invalid JSON'); } }; reader.readAsText(file); }
+function restoreBackup(e){ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ try{ const d=JSON.parse(reader.result); if(d.settings && d.inventory && d.sales){ if(!d.losses) d.losses=[]; data=d; saveData(); location.reload(); } else alert('Invalid file'); }catch{ alert('Invalid JSON'); } }; reader.readAsText(file); }
 function downloadCSV(){ let csv='name,price,stock,category\n'; data.inventory.forEach(i=>{ csv+='"'+i.name.replace(/"/g,'""')+'",'+i.price+','+i.stock+',"'+i.category+'"\n'; }); const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='inventory.csv'; a.click(); URL.revokeObjectURL(url); }
 function uploadCSV(e){ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ const lines=reader.result.split('\n').slice(1); lines.forEach(line=>{ if(!line.trim()) return; const parts=line.match(/(".*?"|[^,]+)/g); if(!parts||parts.length<4) return; const name=parts[0].replace(/^"|"$/g,'').replace(/""/g,'"'); const price=Number(parts[1]); const stock=Number(parts[2]); const cat=parts[3].replace(/^"|"$/g,''); const existing=data.inventory.find(i=>i.name.toLowerCase()===name.toLowerCase()); if(existing){ existing.price=price; existing.stock=stock; existing.category=cat; } else { data.inventory.push({id:Date.now()+Math.random(),name,price,stock,category:cat}); if(!data.settings.categories.includes(cat)) data.settings.categories.push(cat); } }); saveData(); renderInventory(); renderSell(); renderSettings(); alert('CSV imported'); }; reader.readAsText(file); }
 function resetDemo(){ const pwd=prompt('Enter password to reset:'); if(pwd!=='1403'){ if(pwd!==null) alert('Wrong password'); return; } if(!confirm('Reset all data to demo? This will erase everything.')) return; localStorage.removeItem('kirana_v4'); location.reload(); }
